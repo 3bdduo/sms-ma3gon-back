@@ -6,7 +6,7 @@ export class Settings extends Document {
   @Prop({ type: Number, default: 1 })
   _id: any;
 
-  @Prop({ type: String, default: "مدرسة التربية بالقرءان الكريم" })
+  @Prop({ type: String, default: "مدرسة القرءان الكريم بقرية معجون" })
   school_name: string;
 
   @Prop({ type: String })

@@ -32,7 +32,7 @@ export class ExportsService {
 
   private async schoolName() {
     const s = await this.settingsModel.findById(1).lean();
-    return s?.school_name || "مدرسة التربية بالقرءان الكريم";
+    return s?.school_name || "مدرسة القرءان الكريم بقرية معجون";
   }
 
   // ==========================================================================
