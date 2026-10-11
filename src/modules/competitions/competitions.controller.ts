@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
+import { Public } from "../../common/decorators/public.decorator";
 import { CompetitionsService } from "./competitions.service";
 
 @Controller("competitions")
@@ -13,8 +14,14 @@ export class CompetitionsController {
 
   @Get()
   @Roles("admin")
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query("type") type?: "quran" | "edu") {
+    return this.service.findAll(type);
+  }
+
+  @Get("student-results/:nationalId")
+  @Public()
+  getStudentResults(@Param("nationalId") nationalId: string) {
+    return this.service.getStudentResults(nationalId);
   }
 
   @Get(":id")
