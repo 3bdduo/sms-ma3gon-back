@@ -10,7 +10,7 @@ export default () => ({
   geminiModel: (process.env.GEMINI_MODEL || "gemini-flash-latest").trim(),
   corsOrigins: (
     process.env.CORS_ORIGINS ||
-    "https://sms-ma3gon-front.vercel.app,https://3bdduo-bit.github.io,http://localhost:3000,http://localhost:3001,http://localhost:3002"
+    "https://ma3gon-quran.vercel.app,https://sms-ma3gon-front.vercel.app,https://3bdduo-bit.github.io,http://localhost:3000,http://localhost:3001,http://localhost:3002"
   )
     .split(",")
     .map((s) => s.trim())

@@ -11,9 +11,13 @@ async function bootstrap() {
   const logger = new Logger("Bootstrap");
 
   const corsOrigins = config.get<string[]>("corsOrigins") || [];
+  // Regex يسمح لأي localhost بأي بورت (للتطوير المحلي)
+  const localhostRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || corsOrigins.includes(origin)) return callback(null, true);
+      if (!origin) return callback(null, true); // Server-to-server أو Postman
+      if (localhostRegex.test(origin)) return callback(null, true); // أي localhost
+      if (corsOrigins.includes(origin)) return callback(null, true); // الدومينات المسموحة
       callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
