@@ -17,10 +17,24 @@ async function bootstrapServer() {
   const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
   const config = app.get(ConfigService);
 
-  const corsOrigins = config.get<string[]>("corsOrigins") || [];
+  const corsOrigins = (config.get<string[]>("corsOrigins") || []).map((o) =>
+    o.replace(/\/$/, "")
+  );
+  const localhostRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || corsOrigins.includes(origin)) return callback(null, true);
+      if (!origin) return callback(null, true);
+      const cleanOrigin = origin.replace(/\/$/, "");
+      if (localhostRegex.test(cleanOrigin)) return callback(null, true);
+      if (corsOrigins.includes(cleanOrigin)) return callback(null, true);
+      if (
+        /^https:\/\/quranschoolshababalmostqabal(-[a-z0-9-]+)?\.vercel\.app$/.test(
+          cleanOrigin
+        )
+      ) {
+        return callback(null, true);
+      }
       callback(new Error("Not allowed by CORS"));
     },
     credentials: true,

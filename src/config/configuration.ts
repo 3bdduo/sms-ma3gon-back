@@ -8,11 +8,20 @@ export default () => ({
   adminDefaultPassword: process.env.ADMIN_DEFAULT_PASSWORD || "Admin123",
   geminiApiKey: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim().replace(/^["']|["']$/g, "") : undefined,
   geminiModel: (process.env.GEMINI_MODEL || "gemini-flash-latest").trim(),
-  corsOrigins: (
-    process.env.CORS_ORIGINS ||
-    "https://ma3gon-quran.vercel.app,https://sms-ma3gon-front.vercel.app,https://3bdduo-bit.github.io,http://localhost:3000,http://localhost:3001,http://localhost:3002"
+  corsOrigins: Array.from(
+    new Set([
+      "https://quranschoolshababalmostqabal.vercel.app",
+      "https://ma3gon-quran.vercel.app",
+      "https://sms-ma3gon-front.vercel.app",
+      "https://3bdduo-bit.github.io",
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002",
+      ...(process.env.CORS_ORIGINS
+        ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim())
+        : []),
+    ])
   )
-    .split(",")
-    .map((s) => s.trim())
+    .map((s) => s.replace(/\/$/, ""))
     .filter(Boolean),
 });

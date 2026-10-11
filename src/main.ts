@@ -10,14 +10,24 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const logger = new Logger("Bootstrap");
 
-  const corsOrigins = config.get<string[]>("corsOrigins") || [];
+  const corsOrigins = (config.get<string[]>("corsOrigins") || []).map((o) =>
+    o.replace(/\/$/, "")
+  );
   // Regex يسمح لأي localhost بأي بورت (للتطوير المحلي)
   const localhostRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true); // Server-to-server أو Postman
-      if (localhostRegex.test(origin)) return callback(null, true); // أي localhost
-      if (corsOrigins.includes(origin)) return callback(null, true); // الدومينات المسموحة
+      const cleanOrigin = origin.replace(/\/$/, "");
+      if (localhostRegex.test(origin) || localhostRegex.test(cleanOrigin)) return callback(null, true); // أي localhost
+      if (corsOrigins.includes(cleanOrigin)) return callback(null, true); // الدومينات المسموحة
+      if (
+        /^https:\/\/quranschoolshababalmostqabal(-[a-z0-9-]+)?\.vercel\.app$/.test(
+          cleanOrigin
+        )
+      ) {
+        return callback(null, true);
+      }
       callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
