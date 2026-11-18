@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
+﻿import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { ConfigService } from "@nestjs/config";
@@ -33,7 +33,7 @@ export class SeedService implements OnApplicationBootstrap {
       _id: 1,
       school_name: "مدرسة القرءان الكريم بقرية معجون",
       school_phone: "01119838926",
-      school_address: "بني سويف - مركز سمسطا - قرية دشطوط - عزبة معجون",
+      school_address: "بني سويف - مركز سمسطا - قرية معجون",
       monthly_fee: 200,
       admin_password: adminPassword,
     });
