@@ -26,8 +26,21 @@ export class AuthService {
     let eduGroupId: string | null = null;
 
     if (role === "admin") {
-      const settings = await this.settingsModel.findById(1).lean();
-      if (!settings || username !== "Admin" || !settings.admin_password) {
+      let settings = await this.settingsModel.findById(1).lean();
+      if (!settings) {
+        const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || "Admin123";
+        const adminPassword = await bcrypt.hash(defaultPassword, 10);
+        const created = await this.settingsModel.create({
+          _id: 1,
+          school_name: "مدرسة القرءان الكريم بقرية معجون",
+          school_phone: "01119838926",
+          school_address: "بني سويف - مركز سمسطا - قرية معجون",
+          monthly_fee: 200,
+          admin_password: adminPassword,
+        });
+        settings = (created as any).toObject ? (created as any).toObject() : (created as any);
+      }
+      if (!settings || username?.trim().toLowerCase() !== "admin" || !settings.admin_password) {
         throw new UnauthorizedException("اسم المستخدم أو كلمة المرور غير صحيحة");
       }
       if (!password) throw new BadRequestException("كلمة المرور مطلوبة");

@@ -26,10 +26,10 @@ async function bootstrapServer() {
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
       const cleanOrigin = origin.replace(/\/$/, "");
-      if (localhostRegex.test(cleanOrigin)) return callback(null, true);
+      if (localhostRegex.test(origin) || localhostRegex.test(cleanOrigin)) return callback(null, true);
       if (corsOrigins.includes(cleanOrigin)) return callback(null, true);
       if (
-        /^https:\/\/quranschoolshababalmostqabal(-[a-z0-9-]+)?\.vercel\.app$/.test(
+        /^https:\/\/(quranschoolshababalmostqabal|ma3gon|sms-ma3gon-front)(-[a-z0-9-]+)?\.vercel\.app$/.test(
           cleanOrigin
         )
       ) {
@@ -49,6 +49,15 @@ async function bootstrapServer() {
 }
 
 export default async (req: any, res: any) => {
-  await bootstrapServer();
-  expressApp(req, res);
+  try {
+    await bootstrapServer();
+    expressApp(req, res);
+  } catch (err: any) {
+    console.error("Vercel Function Error:", err);
+    res.status(500).json({
+      statusCode: 500,
+      message: "Server initialization error",
+      error: err?.message || String(err),
+    });
+  }
 };

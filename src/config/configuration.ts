@@ -1,6 +1,19 @@
+function normalizeMongoUri(raw?: string): string | undefined {
+  const uri = (raw || "").trim();
+  if (!uri) return undefined;
+  const [base, query] = uri.split("?");
+  const cleanBase = base.replace(/\/+$/, "");
+  const parts = cleanBase.split("/");
+  // parts[0] is 'mongodb+srv:', parts[1] is '', parts[2] is 'host'
+  if (parts.length <= 3 || !parts[3]) {
+    return cleanBase + "/ma3gon" + (query ? "?" + query : "");
+  }
+  return uri;
+}
+
 export default () => ({
   port: parseInt(process.env.PORT, 10) || 3000,
-  mongoUri: process.env.MONGODB_URI || process.env.MONGO_URL || process.env.DATABASE_URL,
+  mongoUri: normalizeMongoUri(process.env.MONGODB_URI || process.env.MONGO_URL || process.env.DATABASE_URL),
   jwt: {
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN || "24h",
