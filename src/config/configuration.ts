@@ -10,6 +10,7 @@ export default () => ({
   geminiModel: (process.env.GEMINI_MODEL || "gemini-flash-latest").trim(),
   corsOrigins: Array.from(
     new Set([
+      "https://ma3gon.vercel.app",
       "https://quranschoolshababalmostqabal.vercel.app",
       "https://ma3gon-quran.vercel.app",
       "https://sms-ma3gon-front.vercel.app",

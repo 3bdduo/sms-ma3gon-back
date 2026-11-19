@@ -21,8 +21,9 @@ async function bootstrap() {
       const cleanOrigin = origin.replace(/\/$/, "");
       if (localhostRegex.test(origin) || localhostRegex.test(cleanOrigin)) return callback(null, true); // أي localhost
       if (corsOrigins.includes(cleanOrigin)) return callback(null, true); // الدومينات المسموحة
+      // أي deploy preview على Vercel للبروجكتين
       if (
-        /^https:\/\/quranschoolshababalmostqabal(-[a-z0-9-]+)?\.vercel\.app$/.test(
+        /^https:\/\/(quranschoolshababalmostqabal|ma3gon|sms-ma3gon-front)(-[a-z0-9-]+)?\.vercel\.app$/.test(
           cleanOrigin
         )
       ) {
