@@ -1,7 +1,8 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from "@nestjs/mongoose";
-import { ThrottlerModule } from "@nestjs/throttler";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { APP_GUARD } from "@nestjs/core";
 import configuration from "./config/configuration";
 
 import { AuthModule } from "./modules/auth/auth.module";
@@ -36,6 +37,8 @@ import { SeedModule } from "./seed/seed.module";
       useFactory: async (config: ConfigService) => ({ uri: config.get<string>("mongoUri") }),
       inject: [ConfigService],
     }),
+    // الـ Throttler عام — الحد الافتراضي 300 req/min لكل المسارات
+    // المسارات الحساسة بتضيف @Throttle({ default: { limit: X, ttl: Y } }) بشكل أشد
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 300 }]),
 
     // ActivityLogModule الأول عشان الإنترسبتور بتاعه يتسجل قبل أي حاجة تانية
@@ -62,6 +65,13 @@ import { SeedModule } from "./seed/seed.module";
     TeacherProfilesModule,
     ContactModule,
     SeedModule,
+  ],
+  providers: [
+    // ThrottlerGuard عام يطبق على كل المسارات تلقائيًا
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

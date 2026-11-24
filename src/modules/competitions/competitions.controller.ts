@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -19,8 +20,10 @@ export class CompetitionsController {
     return this.service.findAll(type);
   }
 
+  // حد أشد: 10 طلبات كل 15 دقيقة لمنع تخمين الأرقام القومية
   @Get("student-results/:nationalId")
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 900000 } })
   getStudentResults(@Param("nationalId") nationalId: string) {
     return this.service.getStudentResults(nationalId);
   }

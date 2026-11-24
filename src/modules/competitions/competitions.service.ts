@@ -241,7 +241,7 @@ export class CompetitionsService {
 
     return {
       studentName: student.name,
-      nationalId: student.national_id,
+      // لا نُعيد الرقم القومي في الردود العامة — كافي للتحقق فقط
       competitions,
       exams: [...examMap.values()],
     };

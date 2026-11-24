@@ -88,7 +88,14 @@ export class StudentsService {
   async findByNationalId(nationalId: string) {
     const student = await this.studentModel.findOne({ national_id: nationalId }).lean();
     if (!student) throw new NotFoundException("الطالب غير موجود");
-    return student;
+    // نرجع حقول عامة فقط — بدون هاش الباسورد أو بيانات داخلية
+    return {
+      id: student.id,
+      name: student.name,
+      groupId: student.group_id,
+      memorizedAmount: student.memorized_amount,
+      currentSurah: student.current_surah,
+    };
   }
 
   async findOne(id: string, user: CurrentUserPayload) {

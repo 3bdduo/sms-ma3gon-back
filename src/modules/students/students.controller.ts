@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Query, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -32,7 +33,9 @@ export class StudentsController {
     return this.studentsService.findWaiting();
   }
 
+  // حد أشد: 10 طلبات كل 15 دقيقة لمنع تخمين الأرقام القومية
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 900000 } })
   @Get("by-national-id/:nationalId")
   findByNationalId(@Param("nationalId") nationalId: string) {
     return this.studentsService.findByNationalId(nationalId);
@@ -44,7 +47,9 @@ export class StudentsController {
     return this.studentsService.findOne(id, user);
   }
 
+  // حد أشد: 5 تسجيلات كل ساعة لمنع الإغراق
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 3600000 } })
   @Post("public-register")
   @LogAction("تسجيل ذاتي من الموقع")
   publicRegister(@Body() body: PublicRegisterDto) {
