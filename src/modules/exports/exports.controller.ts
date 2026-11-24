@@ -4,6 +4,7 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
+import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { ExportsService } from "./exports.service";
 
 // ============================================================================
@@ -96,17 +97,17 @@ export class ExportsController {
   @Get("edu-groups/:id/students.xlsx")
   @Roles("admin", "teacher")
   @LogAction("تصدير كشف طلاب مجموعة تربوية إلى إكسل")
-  async eduGroupStudentsExcel(@Param("id") id: string, @Res() res: Response) {
-    const buffer = await this.service.eduGroupStudentsExcel(id);
+  async eduGroupStudentsExcel(@Param("id") id: string, @CurrentUser() user: CurrentUserPayload, @Res() res: Response) {
+    const buffer = await this.service.eduGroupStudentsExcel(id, user);
     this.sendXlsx(res, buffer, `كشف-طلاب-المجموعة-التربوية-${id}.xlsx`);
   }
 
   @Get("edu-groups/:id/attendance.xlsx")
   @Roles("admin", "teacher")
   @LogAction("تصدير كشف حضور مجموعة تربوية إلى إكسل")
-  async eduGroupAttendanceExcel(@Param("id") id: string, @Query("date") date: string, @Res() res: Response) {
+  async eduGroupAttendanceExcel(@Param("id") id: string, @CurrentUser() user: CurrentUserPayload, @Query("date") date: string, @Res() res: Response) {
     const d = date || new Date().toISOString().slice(0, 10);
-    const buffer = await this.service.eduGroupAttendanceExcel(id, d);
+    const buffer = await this.service.eduGroupAttendanceExcel(id, d, user);
     this.sendXlsx(res, buffer, `كشف-حضور-التربوي-${d}.xlsx`);
   }
 

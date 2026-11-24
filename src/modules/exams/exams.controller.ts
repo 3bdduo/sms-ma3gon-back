@@ -1,12 +1,15 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { ExamsService } from "./exams.service";
 import { CreateExamDto, UpdateExamDto } from "../../common/dto/shared.dto";
 
 @Controller("exams")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles("admin", "teacher")
 export class ExamsController {
   constructor(private readonly service: ExamsService) {}
 

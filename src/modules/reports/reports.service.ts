@@ -147,7 +147,10 @@ export class ReportsService {
     const paidMonths = payments.filter((p) => p.status === "paid").length;
 
     return {
-      ...student, attendanceRecords: attendance, memorizationLog: memorization, payments,
+      // نحذف الحقول الحساسة قبل الإرسال
+      ...student,
+      password_hash: undefined,
+      attendanceRecords: attendance, memorizationLog: memorization, payments,
       stats: {
         attendanceRate: total > 0 ? Math.round((present / total) * 100) : 0, present, total,
         paidMonths, unpaidMonths: payments.filter((p) => p.status === "unpaid").length,

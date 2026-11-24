@@ -41,6 +41,7 @@ export class ReportsController {
   }
 
   @Get("student/:studentId")
+  @Roles("admin", "teacher")
   studentReport(@CurrentUser() user: CurrentUserPayload, @Param("studentId") studentId: string) {
     return this.service.studentReport(user, studentId);
   }

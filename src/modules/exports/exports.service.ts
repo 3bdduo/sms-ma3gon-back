@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
+import { CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import * as ExcelJS from "exceljs";
 import { Packer } from "docx";
 import {
@@ -33,6 +34,18 @@ export class ExportsService {
   private async schoolName() {
     const s = await this.settingsModel.findById(1).lean();
     return s?.school_name || "مدرسة القرءان الكريم بقرية معجون";
+  }
+
+  /**
+   * يتحقق أن المعلم هو صاحب المجموعة التعليمية.
+   * الأدمن دايمًا مسموح له.
+   */
+  private async assertEduGroupOwnership(user: CurrentUserPayload, group: { teacher_id?: string; teacher_username?: string }) {
+    if (user.role === "admin") return;
+    const isOwner =
+      (group.teacher_id && group.teacher_id === user.teacherId) ||
+      (group.teacher_username && group.teacher_username === user.username);
+    if (!isOwner) throw new ForbiddenException("ليس لديك صلاحية على هذه المجموعة التعليمية");
   }
 
   // ==========================================================================
@@ -515,10 +528,12 @@ export class ExportsService {
   // ==========================================================================
   // 8) إكسل: كشف طلاب مجموعة تربوية محددة
   // ==========================================================================
-  async eduGroupStudentsExcel(eduGroupId: string): Promise<ExcelJS.Buffer> {
+  async eduGroupStudentsExcel(eduGroupId: string, user: CurrentUserPayload): Promise<ExcelJS.Buffer> {
     const schoolName = await this.schoolName();
     const group = await this.eduGroupModel.findOne({ id: eduGroupId }).lean();
     if (!group) throw new NotFoundException("المجموعة التربوية غير موجودة");
+
+    await this.assertEduGroupOwnership(user, group);
 
     const teacherName = group.teacher_name || group.teacher_username || "غير محدد";
 
@@ -568,10 +583,12 @@ export class ExportsService {
   // ==========================================================================
   // 9) إكسل: كشف حضور يومي لمجموعة تربوية محددة
   // ==========================================================================
-  async eduGroupAttendanceExcel(eduGroupId: string, date: string): Promise<ExcelJS.Buffer> {
+  async eduGroupAttendanceExcel(eduGroupId: string, date: string, user: CurrentUserPayload): Promise<ExcelJS.Buffer> {
     const schoolName = await this.schoolName();
     const group = await this.eduGroupModel.findOne({ id: eduGroupId }).lean();
     if (!group) throw new NotFoundException("المجموعة التربوية غير موجودة");
+
+    await this.assertEduGroupOwnership(user, group);
 
     const teacherName = group.teacher_name || group.teacher_username || "غير محدد";
 

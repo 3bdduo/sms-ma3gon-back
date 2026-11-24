@@ -1,12 +1,15 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { AttendanceService } from "./attendance.service";
 import { MarkAttendanceDto, MarkBulkAttendanceDto } from "../../common/dto/shared.dto";
 
 @Controller("attendance")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles("admin", "teacher")
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
