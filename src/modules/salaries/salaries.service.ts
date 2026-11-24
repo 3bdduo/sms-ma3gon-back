@@ -144,14 +144,17 @@ export class SalariesService {
       {
         teacher_username: username,
         month_key: monthKey,
-        status: body.status || "paid",
+        status: body.status || "unpaid",
         base_salary: baseSalary,
         incentive_amount: incentiveAmount,
         incentive_reason: body.incentiveReason || null,
         deduction_amount: deductionAmount,
         deduction_reason: body.deductionReason || null,
         net_salary: netSalary,
-        amount: body.amount !== undefined && body.amount !== null ? Number(body.amount) : netSalary,
+        // amount لا يتجاوز الصافي المحسوب
+        amount: body.amount !== undefined && body.amount !== null
+          ? Math.min(Number(body.amount), netSalary)
+          : netSalary,
         paid_date: body.paidDate || null,
         note: body.note || null,
         paid_by: body.paidBy || null,

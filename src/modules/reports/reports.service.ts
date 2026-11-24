@@ -1,6 +1,14 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
+
+/** توقيت القاهرة (UTC+2 شتاء / UTC+3 صيف) */
+function getCairoDateString(d: Date = new Date()): string {
+  return d.toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
+}
+function getCairoMonthString(d: Date = new Date()): string {
+  return getCairoDateString(d).slice(0, 7);
+}
 import {
   Group, EduGroup, Student, Teacher,
   AttendanceRecord, PaymentRecord, MemorizationLog, EduStudentRef,
@@ -89,7 +97,7 @@ export class ReportsService {
   async dashboardAttendance() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const dateStr = thirtyDaysAgo.toISOString().slice(0, 10);
+    const dateStr = getCairoDateString(thirtyDaysAgo);
     const records = await this.attendanceModel.find({ date: { $gte: dateStr } }).lean();
 
     const dayMap: Record<string, { present: number; absent: number; late: number; excused: number }> = {};
@@ -108,7 +116,7 @@ export class ReportsService {
 
   // Dashboard 4 — ملخص المدفوعات للشهر الحالي
   async dashboardPayments(monthKey?: string) {
-    const key = monthKey || new Date().toISOString().slice(0, 7);
+    const key = monthKey || getCairoMonthString();
     const payments = await this.paymentModel.find({ month_key: key }).lean();
     const paid = payments.filter((p) => p.status === "paid");
     const unpaid = payments.filter((p) => p.status === "unpaid");

@@ -34,7 +34,7 @@ export default () => {
     mongoUri: normalizeMongoUri(process.env.MONGODB_URI || process.env.MONGO_URL || process.env.DATABASE_URL),
     jwt: {
       secret: jwtSecret,
-      expiresIn: process.env.JWT_EXPIRES_IN || "24h",
+      expiresIn: process.env.JWT_EXPIRES_IN || "2h",
     },
     // لو مش موجود نستخدم placeholder واضح — مش "Admin123" hardcoded
     adminDefaultPassword: process.env.ADMIN_DEFAULT_PASSWORD || "CHANGE_ME_ON_FIRST_RUN",

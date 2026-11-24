@@ -28,3 +28,5 @@ export class ActivityLog extends Document {
 export const ActivityLogSchema = SchemaFactory.createForClass(ActivityLog);
 ActivityLogSchema.index({ timestamp: -1 });
 ActivityLogSchema.index({ actor_username: 1 });
+// TTL: بيمسح السجلات القديمة تلقائياً بعد 90 يوم
+ActivityLogSchema.index({ timestamp: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });

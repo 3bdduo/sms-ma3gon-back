@@ -217,7 +217,8 @@ export class EduGroupsService {
     if (body.teacherName) update.teacher_name = body.teacherName;
     if (body.nationalId) update.teacher_national_id = body.nationalId;
     if (body.phone !== undefined) update.teacher_phone = body.phone;
-    if (body.teacherUsername) update.teacher_username = body.teacherUsername;
+    // المعلم لا يقدر يغير اسم المستخدم — الأدمن فقط
+    if (body.teacherUsername && user.role === "admin") update.teacher_username = body.teacherUsername;
     if (body.teacherPassword) update.teacher_password = await bcrypt.hash(body.teacherPassword, 10);
     if (Object.keys(update).length === 0) throw new ConflictException("لا يوجد بيانات للتحديث");
 
@@ -262,6 +263,9 @@ export class EduGroupsService {
 
   async addStudent(id: string, user: CurrentUserPayload, studentId: string) {
     if (user.role === "teacher" && user.eduGroupId !== id) throw new ForbiddenException("ليس لديك صلاحية");
+    // نتأكد من وجود الطالب في الداتابيز قبل الربط
+    const student = await this.studentModel.findOne({ id: studentId }).lean();
+    if (!student) throw new NotFoundException("الطالب غير موجود");
     await this.eduStudentRefModel.findOneAndUpdate(
       { edu_group_id: id, student_id: studentId },
       { edu_group_id: id, student_id: studentId },
@@ -274,7 +278,13 @@ export class EduGroupsService {
     if (user.role === "teacher" && user.eduGroupId !== id) throw new ForbiddenException("ليس لديك صلاحية");
     if (!studentIds || !studentIds.length) return { count: 0 };
 
-    const operations = studentIds.map((sid) => ({
+    // نتأكد إن كل الـ ids موجودة في الداتابيز
+    const existing = await this.studentModel.find({ id: { $in: studentIds } }, { id: 1 }).lean();
+    const validIds = new Set(existing.map((s) => s.id));
+    const filtered = studentIds.filter((sid) => validIds.has(sid));
+    if (!filtered.length) throw new NotFoundException("لم يُعثر على أي طالب بالمعرّفات المُدخلة");
+
+    const operations = filtered.map((sid) => ({
       updateOne: {
         filter: { edu_group_id: id, student_id: sid },
         update: { $set: { edu_group_id: id, student_id: sid } },
