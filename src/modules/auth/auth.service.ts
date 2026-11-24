@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 import { Model } from "mongoose";
 import * as bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
@@ -16,6 +17,7 @@ export class AuthService {
     @InjectModel(Student.name) private readonly studentModel: Model<Student>,
     @InjectModel(EduGroup.name) private readonly eduGroupModel: Model<EduGroup>,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -28,7 +30,11 @@ export class AuthService {
     if (role === "admin") {
       let settings = await this.settingsModel.findById(1).lean();
       if (!settings) {
-        const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || "Admin123";
+        // نستخدم env variable فقط — مش hardcoded fallback
+        const defaultPassword = this.configService.get<string>("adminDefaultPassword");
+        if (!defaultPassword || defaultPassword === "CHANGE_ME_ON_FIRST_RUN") {
+          throw new BadRequestException("ADMIN_DEFAULT_PASSWORD غير مضبوط في متغيرات البيئة — أضفه ثم أعد التشغيل");
+        }
         const adminPassword = await bcrypt.hash(defaultPassword, 10);
         const created = await this.settingsModel.create({
           _id: 1,
@@ -127,6 +133,9 @@ export class AuthService {
       }
 
     } else if (role === "student") {
+      // القرار المعتمد: دخول الطالب بالرقم القومي فقط (لا password معمول بيه).
+      // الـ password الاختياري في الـ LoginDto موجود للمستقبل لكن لا يُتحقق منه حاليًا.
+      // لو قرّرت تفعيله لاحقًا: student.password بيكون موجود في الـ schema.
       const student = await this.studentModel.findOne({ national_id: username }).lean();
       if (!student) throw new UnauthorizedException("الرقم القومي غير موجود");
       user = { role: "student", username: student.national_id, studentId: student.id };

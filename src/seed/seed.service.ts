@@ -26,7 +26,15 @@ export class SeedService implements OnApplicationBootstrap {
     const existing = await this.settingsModel.findById(1);
     if (existing) return;
 
-    const defaultPassword = this.configService.get<string>("adminDefaultPassword") || "Admin123";
+    // نستخدم configuration فقط — مش hardcoded fallback
+    const defaultPassword = this.configService.get<string>("adminDefaultPassword");
+    if (!defaultPassword || defaultPassword === "CHANGE_ME_ON_FIRST_RUN") {
+      this.logger.warn(
+        "⚠️  ADMIN_DEFAULT_PASSWORD غير مضبوط أو لسه على القيمة الافتراضية — " +
+        "لن يتم إنشاء الإعدادات تلقائيًا. أضفه في متغيرات البيئة ثم أعد التشغيل.",
+      );
+      return;
+    }
     const adminPassword = await bcrypt.hash(defaultPassword, 10);
 
     await this.settingsModel.create({
