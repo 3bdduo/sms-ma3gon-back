@@ -92,12 +92,13 @@ export class ReportsService {
     const dateStr = thirtyDaysAgo.toISOString().slice(0, 10);
     const records = await this.attendanceModel.find({ date: { $gte: dateStr } }).lean();
 
-    const dayMap: Record<string, { present: number; absent: number; excused: number }> = {};
+    const dayMap: Record<string, { present: number; absent: number; late: number; excused: number }> = {};
     records.forEach((r) => {
-      if (!dayMap[r.date]) dayMap[r.date] = { present: 0, absent: 0, excused: 0 };
+      if (!dayMap[r.date]) dayMap[r.date] = { present: 0, absent: 0, late: 0, excused: 0 };
       if (r.status === "حاضر") dayMap[r.date].present++;
       else if (r.status === "غائب") dayMap[r.date].absent++;
-      else dayMap[r.date].excused++;
+      else if (r.status === "متأخر") dayMap[r.date].late++;
+      else dayMap[r.date].excused++; // مستأذن وأي قيمة أخرى
     });
 
     return Object.entries(dayMap)

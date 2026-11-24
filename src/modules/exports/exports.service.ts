@@ -371,7 +371,7 @@ export class ExportsService {
       const status = statusMap[s.id] || "غائب";
       const row = sheet.addRow([idx + 1, s.name, status]);
       styleDataRow(row, idx % 2 === 0);
-      const color = status === "حاضر" ? "FF0F6B3E" : status === "متأخر" ? "FFB8860B" : "FFB00020";
+      const color = status === "حاضر" ? "FF0F6B3E" : status === "متأخر" ? "FFB8860B" : status === "مستأذن" ? "FFEA6E00" : "FFB00020";
       row.getCell(3).font = { bold: true, color: { argb: color } };
     });
 
@@ -631,7 +631,7 @@ export class ExportsService {
         status,
       ]);
       styleDataRow(row, idx % 2 === 0);
-      const color = status === "حاضر" ? "FF0F6B3E" : status === "متأخر" ? "FFB8860B" : "FFB00020";
+      const color = status === "حاضر" ? "FF0F6B3E" : status === "متأخر" ? "FFB8860B" : status === "مستأذن" ? "FFEA6E00" : "FFB00020";
       row.getCell(5).font = { bold: true, color: { argb: color } };
     });
 
