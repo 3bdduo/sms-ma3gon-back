@@ -4,6 +4,7 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { SettingsService } from "./settings.service";
+import { UpdateSettingsDto } from "../../common/dto/shared.dto";
 
 @Controller("settings")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -18,7 +19,7 @@ export class SettingsController {
 
   @Patch()
   @LogAction("تعديل إعدادات المدرسة")
-  update(@Body() body: any) {
+  update(@Body() body: UpdateSettingsDto) {
     return this.settingsService.update(body);
   }
 }

@@ -3,6 +3,7 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { ExamsService } from "./exams.service";
+import { CreateExamDto, UpdateExamDto } from "../../common/dto/shared.dto";
 
 @Controller("exams")
 @UseGuards(JwtAuthGuard)
@@ -16,13 +17,13 @@ export class ExamsController {
 
   @Post(":eduGroupId")
   @LogAction("رصد امتحان جديد")
-  create(@CurrentUser() user: CurrentUserPayload, @Param("eduGroupId") eduGroupId: string, @Body() body: any) {
+  create(@CurrentUser() user: CurrentUserPayload, @Param("eduGroupId") eduGroupId: string, @Body() body: CreateExamDto) {
     return this.service.create(user, eduGroupId, body);
   }
 
   @Put(":eduGroupId/:examId")
   @LogAction("تعديل امتحان")
-  update(@CurrentUser() user: CurrentUserPayload, @Param("eduGroupId") eduGroupId: string, @Param("examId") examId: string, @Body() body: any) {
+  update(@CurrentUser() user: CurrentUserPayload, @Param("eduGroupId") eduGroupId: string, @Param("examId") examId: string, @Body() body: UpdateExamDto) {
     return this.service.update(user, eduGroupId, examId, body);
   }
 

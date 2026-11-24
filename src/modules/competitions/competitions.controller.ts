@@ -6,6 +6,7 @@ import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { Public } from "../../common/decorators/public.decorator";
 import { CompetitionsService } from "./competitions.service";
+import { CreateCompetitionDto, UpdateCompetitionDto, SaveResultsDto } from "../../common/dto/shared.dto";
 
 @Controller("competitions")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -33,14 +34,14 @@ export class CompetitionsController {
   @Post()
   @Roles("admin")
   @LogAction("إنشاء مسابقة جديدة")
-  create(@Body() body: any) {
+  create(@Body() body: CreateCompetitionDto) {
     return this.service.create(body);
   }
 
   @Put(":id")
   @Roles("admin")
   @LogAction("تعديل بيانات مسابقة")
-  update(@Param("id") id: string, @Body() body: any) {
+  update(@Param("id") id: string, @Body() body: UpdateCompetitionDto) {
     return this.service.update(id, body);
   }
 
@@ -69,7 +70,7 @@ export class CompetitionsController {
   @Put(":id/results")
   @Roles("admin")
   @LogAction("نشر نتائج مسابقة")
-  saveResults(@Param("id") id: string, @Body("results") results: any[]) {
-    return this.service.saveResults(id, results);
+  saveResults(@Param("id") id: string, @Body() body: SaveResultsDto) {
+    return this.service.saveResults(id, body.results);
   }
 }

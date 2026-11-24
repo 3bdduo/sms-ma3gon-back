@@ -36,7 +36,7 @@ async function bootstrap() {
 
   // مسار /health بره البادئة /api/v1 زي ما كان بالظبط في النسخة القديمة
   app.setGlobalPrefix("api/v1", { exclude: ["health"] });
-  app.useGlobalPipes(new ValidationPipe({ whitelist: false, transform: true }));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableShutdownHooks();
 

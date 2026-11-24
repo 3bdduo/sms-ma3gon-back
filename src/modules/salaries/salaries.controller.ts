@@ -5,6 +5,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { SalariesService } from "./salaries.service";
+import { SetSalaryConfigDto, SetSalaryMonthDto } from "../../common/dto/shared.dto";
 
 @Controller("salaries")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -32,7 +33,7 @@ export class SalariesController {
   @Put("teacher/:username/config")
   @Roles("admin")
   @LogAction("تعديل إعدادات راتب معلم")
-  setConfig(@Param("username") username: string, @Body() body: { baseSalary: number; notes?: string }) {
+  setConfig(@Param("username") username: string, @Body() body: SetSalaryConfigDto) {
     return this.service.setConfig(username, body.baseSalary, body.notes);
   }
 
@@ -54,7 +55,7 @@ export class SalariesController {
   @Put("teacher/:username/month/:monthKey")
   @Roles("admin")
   @LogAction("تسجيل راتب شهري لمعلم")
-  setMonth(@Param("username") username: string, @Param("monthKey") monthKey: string, @Body() body: any) {
+  setMonth(@Param("username") username: string, @Param("monthKey") monthKey: string, @Body() body: SetSalaryMonthDto) {
     return this.service.setMonth(username, monthKey, body);
   }
 

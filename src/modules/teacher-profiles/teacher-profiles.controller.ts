@@ -5,6 +5,10 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { Public } from "../../common/decorators/public.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { TeacherProfilesService } from "./teacher-profiles.service";
+import {
+  CreateTeacherProfileDto,
+  UpdateTeacherProfileDto,
+} from "../../common/dto/shared.dto";
 
 @Controller("teacher-profiles")
 export class TeacherProfilesController {
@@ -33,7 +37,7 @@ export class TeacherProfilesController {
   @Roles("admin")
   @Post()
   @LogAction("إضافة بروفايل معلم عام")
-  create(@Body() body: any) {
+  create(@Body() body: CreateTeacherProfileDto) {
     return this.service.create(body);
   }
 
@@ -41,7 +45,7 @@ export class TeacherProfilesController {
   @Roles("admin")
   @Put(":id")
   @LogAction("تعديل بروفايل معلم عام")
-  update(@Param("id") id: string, @Body() body: any) {
+  update(@Param("id") id: string, @Body() body: UpdateTeacherProfileDto) {
     return this.service.update(id, body);
   }
 

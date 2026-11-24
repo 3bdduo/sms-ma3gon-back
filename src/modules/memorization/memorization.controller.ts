@@ -3,6 +3,7 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { MemorizationService } from "./memorization.service";
+import { CreateMemorizationDto, UpdateMemorizationDto } from "../../common/dto/shared.dto";
 
 @Controller("memorization")
 @UseGuards(JwtAuthGuard)
@@ -16,13 +17,13 @@ export class MemorizationController {
 
   @Post(":studentId")
   @LogAction("تسجيل تسميع/حفظ جديد")
-  create(@CurrentUser() user: CurrentUserPayload, @Param("studentId") studentId: string, @Body() body: any) {
+  create(@CurrentUser() user: CurrentUserPayload, @Param("studentId") studentId: string, @Body() body: CreateMemorizationDto) {
     return this.service.create(user, studentId, body);
   }
 
   @Put(":studentId/:entryId")
   @LogAction("تعديل سجل حفظ")
-  update(@CurrentUser() user: CurrentUserPayload, @Param("studentId") studentId: string, @Param("entryId") entryId: string, @Body() body: any) {
+  update(@CurrentUser() user: CurrentUserPayload, @Param("studentId") studentId: string, @Param("entryId") entryId: string, @Body() body: UpdateMemorizationDto) {
     return this.service.update(user, studentId, entryId, body);
   }
 

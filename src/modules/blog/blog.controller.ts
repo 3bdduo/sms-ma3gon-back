@@ -5,12 +5,12 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { Public } from "../../common/decorators/public.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { BlogService } from "./blog.service";
+import { CreateBlogDto, UpdateBlogDto } from "../../common/dto/shared.dto";
 
 @Controller("blog")
 export class BlogController {
   constructor(private readonly service: BlogService) {}
 
-  // عام — أي زائر يقدر يشوف المقالات المنشورة
   @Public()
   @Get()
   findPublished(@Query("category") category?: string) {
@@ -23,7 +23,6 @@ export class BlogController {
     return this.service.findBySlug(slug);
   }
 
-  // أدمن فقط من هنا تحت
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin")
   @Get("admin/all")
@@ -35,7 +34,7 @@ export class BlogController {
   @Roles("admin")
   @Post()
   @LogAction("إضافة مقال جديد")
-  create(@Body() body: any) {
+  create(@Body() body: CreateBlogDto) {
     return this.service.create(body);
   }
 
@@ -43,7 +42,7 @@ export class BlogController {
   @Roles("admin")
   @Put(":id")
   @LogAction("تعديل مقال")
-  update(@Param("id") id: string, @Body() body: any) {
+  update(@Param("id") id: string, @Body() body: UpdateBlogDto) {
     return this.service.update(id, body);
   }
 

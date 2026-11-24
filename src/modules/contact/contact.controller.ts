@@ -6,17 +6,17 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { Public } from "../../common/decorators/public.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { ContactService } from "./contact.service";
+import { SubmitContactDto } from "../../common/dto/shared.dto";
 
 @Controller("contact")
 export class ContactController {
   constructor(private readonly service: ContactService) {}
 
-  // عام — نموذج "تواصل معنا"، بمعدل محدود لمنع السبام
   @Public()
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 3600000 } })
   @Post()
-  submit(@Body() body: any) {
+  submit(@Body() body: SubmitContactDto) {
     return this.service.submit(body);
   }
 

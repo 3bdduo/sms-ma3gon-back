@@ -6,6 +6,13 @@ import { LogAction } from "../../common/decorators/log-action.decorator";
 import { Public } from "../../common/decorators/public.decorator";
 import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { StudentsService } from "./students.service";
+import {
+  CreateStudentDto,
+  UpdateStudentDto,
+  MoveToGroupDto,
+  UpdateMonthlyFeeDto,
+  PublicRegisterDto,
+} from "../../common/dto/shared.dto";
 
 @Controller("students")
 export class StudentsController {
@@ -18,7 +25,6 @@ export class StudentsController {
     return this.studentsService.findAll(user, groupId);
   }
 
-  // قائمة الانتظار - الأدمن فقط
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin")
   @Get("waiting")
@@ -26,7 +32,6 @@ export class StudentsController {
     return this.studentsService.findWaiting();
   }
 
-  // مسار عام (بدون توكن) عشان صفحة تسجيل دخول الطالب تتأكد من الرقم القومي
   @Public()
   @Get("by-national-id/:nationalId")
   findByNationalId(@Param("nationalId") nationalId: string) {
@@ -39,11 +44,10 @@ export class StudentsController {
     return this.studentsService.findOne(id, user);
   }
 
-  // تسجيل ذاتي من الموقع (بدون توكن)
   @Public()
   @Post("public-register")
   @LogAction("تسجيل ذاتي من الموقع")
-  publicRegister(@Body() body: any) {
+  publicRegister(@Body() body: PublicRegisterDto) {
     return this.studentsService.publicRegister(body);
   }
 
@@ -51,24 +55,23 @@ export class StudentsController {
   @Roles("admin", "teacher")
   @Post()
   @LogAction("تسجيل طالب جديد")
-  create(@CurrentUser() user: CurrentUserPayload, @Body() body: any) {
+  create(@CurrentUser() user: CurrentUserPayload, @Body() body: CreateStudentDto) {
     return this.studentsService.create(user, body);
   }
 
-  // نقل طالب من الانتظار لمجموعة
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin")
   @Patch(":id/move-to-group")
   @LogAction("نقل طالب من الانتظار")
-  moveFromWaiting(@Param("id") id: string, @Body("groupId") groupId: string) {
-    return this.studentsService.moveFromWaiting(id, groupId);
+  moveFromWaiting(@Param("id") id: string, @Body() body: MoveToGroupDto) {
+    return this.studentsService.moveFromWaiting(id, body.groupId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "teacher")
   @Put(":id")
   @LogAction("تعديل بيانات طالب")
-  update(@Param("id") id: string, @CurrentUser() user: CurrentUserPayload, @Body() body: any) {
+  update(@Param("id") id: string, @CurrentUser() user: CurrentUserPayload, @Body() body: UpdateStudentDto) {
     return this.studentsService.update(id, user, body);
   }
 
@@ -85,7 +88,7 @@ export class StudentsController {
   @Roles("admin")
   @Patch(":id/monthly-fee")
   @LogAction("تعديل الاشتراك الشهري لطالب")
-  updateMonthlyFee(@Param("id") id: string, @Body("fee") fee: number) {
-    return this.studentsService.updateMonthlyFee(id, fee);
+  updateMonthlyFee(@Param("id") id: string, @Body() body: UpdateMonthlyFeeDto) {
+    return this.studentsService.updateMonthlyFee(id, body.fee);
   }
 }

@@ -5,6 +5,12 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { EduGroupsService } from "./edu-groups.service";
+import {
+  CreateEduGroupDto,
+  UpdateEduGroupDto,
+  EduTransferStudentDto,
+  EduChangeTeacherDto,
+} from "../../common/dto/shared.dto";
 
 @Controller("edu-groups")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -25,14 +31,14 @@ export class EduGroupsController {
   @Post()
   @Roles("admin")
   @LogAction("إنشاء مجموعة تعليمية جديدة")
-  create(@Body() body: any) {
+  create(@Body() body: CreateEduGroupDto) {
     return this.eduGroupsService.create(body);
   }
 
   @Put(":id")
   @Roles("admin", "teacher")
   @LogAction("تعديل بيانات مجموعة تعليمية")
-  update(@Param("id") id: string, @CurrentUser() user: CurrentUserPayload, @Body() body: any) {
+  update(@Param("id") id: string, @CurrentUser() user: CurrentUserPayload, @Body() body: UpdateEduGroupDto) {
     return this.eduGroupsService.update(id, user, body);
   }
 
@@ -71,17 +77,15 @@ export class EduGroupsController {
   @LogAction("نقل طالب بين المجموعات التعليمية")
   transferStudent(
     @Param("id") fromGroupId: string,
-    @Body("studentId") studentId: string,
-    @Body("toGroupId") toGroupId: string,
+    @Body() body: EduTransferStudentDto,
   ) {
-    return this.eduGroupsService.transferStudent(studentId, fromGroupId, toGroupId);
+    return this.eduGroupsService.transferStudent(body.studentId, fromGroupId, body.toGroupId);
   }
 
   @Post(":id/change-teacher")
   @Roles("admin")
   @LogAction("تغيير معلم المجموعة التعليمية")
-  changeTeacher(@Param("id") id: string, @Body("newTeacherId") newTeacherId: string) {
-    return this.eduGroupsService.changeTeacher(id, newTeacherId);
+  changeTeacher(@Param("id") id: string, @Body() body: EduChangeTeacherDto) {
+    return this.eduGroupsService.changeTeacher(id, body.newTeacherId);
   }
 }
-

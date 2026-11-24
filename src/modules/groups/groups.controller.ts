@@ -5,6 +5,12 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { GroupsService } from "./groups.service";
+import {
+  CreateGroupDto,
+  UpdateGroupDto,
+  TransferStudentDto,
+  ChangeTeacherDto,
+} from "../../common/dto/shared.dto";
 
 @Controller("groups")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -31,14 +37,14 @@ export class GroupsController {
   @Post()
   @Roles("admin")
   @LogAction("إنشاء حلقة تحفيظ جديدة")
-  create(@Body() body: any) {
+  create(@Body() body: CreateGroupDto) {
     return this.groupsService.create(body);
   }
 
   @Put(":id")
   @Roles("admin", "teacher")
   @LogAction("تعديل بيانات حلقة")
-  update(@Param("id") id: string, @CurrentUser() user: CurrentUserPayload, @Body() body: any) {
+  update(@Param("id") id: string, @CurrentUser() user: CurrentUserPayload, @Body() body: UpdateGroupDto) {
     return this.groupsService.update(id, user, body);
   }
 
@@ -53,14 +59,14 @@ export class GroupsController {
   @Post("transfer-student")
   @Roles("admin")
   @LogAction("نقل طالب بين حلقات التحفيظ")
-  transferStudent(@Body("studentId") studentId: string, @Body("toGroupId") toGroupId: string) {
-    return this.groupsService.transferStudent(studentId, toGroupId);
+  transferStudent(@Body() body: TransferStudentDto) {
+    return this.groupsService.transferStudent(body.studentId, body.toGroupId);
   }
 
   @Post(":id/change-teacher")
   @Roles("admin")
   @LogAction("تغيير معلم حلقة التحفيظ")
-  changeTeacher(@Param("id") id: string, @Body("newTeacherId") newTeacherId: string) {
-    return this.groupsService.changeTeacher(id, newTeacherId);
+  changeTeacher(@Param("id") id: string, @Body() body: ChangeTeacherDto) {
+    return this.groupsService.changeTeacher(id, body.newTeacherId);
   }
 }

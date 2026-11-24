@@ -5,6 +5,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { PaymentsService } from "./payments.service";
+import { UpdatePaymentDto } from "../../common/dto/shared.dto";
 
 @Controller("payments")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -19,7 +20,7 @@ export class PaymentsController {
   @Patch("student/:studentId/month/:monthKey")
   @Roles("admin")
   @LogAction("تحديث حالة دفع اشتراك شهري")
-  updateMonth(@Param("studentId") studentId: string, @Param("monthKey") monthKey: string, @Body() body: any) {
+  updateMonth(@Param("studentId") studentId: string, @Param("monthKey") monthKey: string, @Body() body: UpdatePaymentDto) {
     return this.service.updateMonth(studentId, monthKey, body);
   }
 

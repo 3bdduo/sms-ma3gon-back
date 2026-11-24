@@ -3,6 +3,7 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentUser, CurrentUserPayload } from "../../common/decorators/current-user.decorator";
 import { LogAction } from "../../common/decorators/log-action.decorator";
 import { AttendanceService } from "./attendance.service";
+import { MarkAttendanceDto, MarkBulkAttendanceDto } from "../../common/dto/shared.dto";
 
 @Controller("attendance")
 @UseGuards(JwtAuthGuard)
@@ -11,13 +12,13 @@ export class AttendanceController {
 
   @Post()
   @LogAction("تسجيل حضور طالب")
-  markOne(@CurrentUser() user: CurrentUserPayload, @Body() body: { studentId: string; date: string; status: string }) {
+  markOne(@CurrentUser() user: CurrentUserPayload, @Body() body: MarkAttendanceDto) {
     return this.attendanceService.markOne(user, body.studentId, body.date, body.status);
   }
 
   @Post("bulk")
   @LogAction("تسجيل حضور جماعي")
-  markBulk(@CurrentUser() user: CurrentUserPayload, @Body() body: { date: string; entries: any[] }) {
+  markBulk(@CurrentUser() user: CurrentUserPayload, @Body() body: MarkBulkAttendanceDto) {
     return this.attendanceService.markBulk(user, body.date, body.entries);
   }
 
