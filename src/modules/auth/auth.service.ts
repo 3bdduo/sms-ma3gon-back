@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
@@ -10,6 +10,8 @@ import { LoginDto } from "./dto/login.dto";
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectModel(Settings.name) private readonly settingsModel: Model<Settings>,
     @InjectModel(Teacher.name) private readonly teacherModel: Model<Teacher>,
@@ -47,11 +49,15 @@ export class AuthService {
         settings = (created as any).toObject ? (created as any).toObject() : (created as any);
       }
       if (!settings || username?.trim().toLowerCase() !== "admin" || !settings.admin_password) {
+        this.logger.warn(`FAILED_LOGIN [admin] username="${username}" reason=invalid_username`);
         throw new UnauthorizedException("اسم المستخدم أو كلمة المرور غير صحيحة");
       }
       if (!password) throw new BadRequestException("كلمة المرور مطلوبة");
       const valid = await bcrypt.compare(password, settings.admin_password);
-      if (!valid) throw new UnauthorizedException("اسم المستخدم أو كلمة المرور غير صحيحة");
+      if (!valid) {
+        this.logger.warn(`FAILED_LOGIN [admin] username="${username}" reason=wrong_password`);
+        throw new UnauthorizedException("اسم المستخدم أو كلمة المرور غير صحيحة");
+      }
       user = { role: "admin", username: "Admin" };
 
     } else if (role === "teacher") {
@@ -63,7 +69,10 @@ export class AuthService {
 
       if (teacher) {
         const valid = await bcrypt.compare(password, teacher.password);
-        if (!valid) throw new UnauthorizedException("اسم المستخدم أو كلمة المرور غير صحيحة");
+        if (!valid) {
+          this.logger.warn(`FAILED_LOGIN [teacher] username="${username}" reason=wrong_password`);
+          throw new UnauthorizedException("اسم المستخدم أو كلمة المرور غير صحيحة");
+        }
 
         teacherId = teacher.id;
 
@@ -116,10 +125,16 @@ export class AuthService {
       } else {
         // فحص ما إذا كان معلماً تربوياً مسجلاً في جدول EduGroup مباشرة
         const eduGroup = await this.eduGroupModel.findOne({ teacher_username: username }).lean();
-        if (!eduGroup) throw new UnauthorizedException("اسم المستخدم أو كلمة المرور غير صحيحة");
+        if (!eduGroup) {
+          this.logger.warn(`FAILED_LOGIN [teacher] username="${username}" reason=not_found`);
+          throw new UnauthorizedException("اسم المستخدم أو كلمة المرور غير صحيحة");
+        }
 
         const valid = await bcrypt.compare(password, eduGroup.teacher_password);
-        if (!valid) throw new UnauthorizedException("اسم المستخدم أو كلمة المرور غير صحيحة");
+        if (!valid) {
+          this.logger.warn(`FAILED_LOGIN [teacher/edu] username="${username}" reason=wrong_password`);
+          throw new UnauthorizedException("اسم المستخدم أو كلمة المرور غير صحيحة");
+        }
 
         teacherType = "edu";
         eduGroupId = eduGroup.id;
@@ -137,7 +152,10 @@ export class AuthService {
       // الـ password الاختياري في الـ LoginDto موجود للمستقبل لكن لا يُتحقق منه حاليًا.
       // لو قرّرت تفعيله لاحقًا: student.password بيكون موجود في الـ schema.
       const student = await this.studentModel.findOne({ national_id: username }).lean();
-      if (!student) throw new UnauthorizedException("الرقم القومي غير موجود");
+      if (!student) {
+        this.logger.warn(`FAILED_LOGIN [student] national_id="${username}" reason=not_found`);
+        throw new UnauthorizedException("الرقم القومي غير موجود");
+      }
       user = { role: "student", username: student.national_id, studentId: student.id };
     } else {
       throw new BadRequestException("role غير صالح");
