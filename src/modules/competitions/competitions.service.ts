@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { InjectModel, InjectConnection } from "@nestjs/mongoose";
+import { Model, Connection } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 import {
   Competition, CompetitionParticipant, CompetitionResult,
@@ -19,6 +19,7 @@ export class CompetitionsService {
     @InjectModel(Group.name) private readonly groupModel: Model<Group>,
     @InjectModel(EduGroup.name) private readonly eduGroupModel: Model<EduGroup>,
     @InjectModel(ExamRecord.name) private readonly examModel: Model<ExamRecord>,
+    @InjectConnection() private readonly connection: Connection,
   ) {}
 
   async findAll(type?: "quran" | "edu") {
@@ -182,13 +183,21 @@ export class CompetitionsService {
       finalResults = sorted.map((r, idx) => ({ ...r, rank: idx + 1 }));
     }
 
-    await this.resultModel.deleteMany({ competition_id: competitionId });
     const docs = finalResults.map((r) => ({
       competition_id: competitionId, student_id: r.studentId,
       score: r.score, rank_position: r.rank, notes: r.notes || null,
     }));
-    await this.resultModel.insertMany(docs);
-    await this.competitionModel.updateOne({ id: competitionId }, { results_published: true });
+    // transaction: حذف القديم وإدخال الجديد وتحديث الحالة في عملية واحدة آمنة
+    const session = await this.connection.startSession();
+    try {
+      await session.withTransaction(async () => {
+        await this.resultModel.deleteMany({ competition_id: competitionId }, { session });
+        await this.resultModel.insertMany(docs, { session });
+        await this.competitionModel.updateOne({ id: competitionId }, { results_published: true }, { session });
+      });
+    } finally {
+      await session.endSession();
+    }
 
     return { message: "تم الحفظ والإعلان", results: finalResults };
   }

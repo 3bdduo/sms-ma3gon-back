@@ -19,6 +19,10 @@ export class PaymentsService {
     const groupIds = (user as any).groupIds || [];
     if (user.role === "teacher" && !groupIds.includes(student.group_id)) throw new ForbiddenException("ليس لديك صلاحية");
 
+    // نضمن وجود صفوف الدفع للسنة الحالية والقادمة (في حالة الطلاب القدامى)
+    await this.ensureYearRows(studentId, student.monthly_fee || 0, new Date().getFullYear());
+    await this.ensureYearRows(studentId, student.monthly_fee || 0, new Date().getFullYear() + 1);
+
     const records = await this.paymentModel.find({ student_id: studentId }).lean();
     const months: any = {};
     records.forEach((r) => {
@@ -60,5 +64,23 @@ export class PaymentsService {
       amount: (paymentMap[s.id] as any)?.amount,
       paid_date: (paymentMap[s.id] as any)?.paid_date,
     }));
+  }
+
+  // helper: ينشئ صفوف الدفع الناقصة لسنة معينة بدون تكرار
+  private async ensureYearRows(studentId: string, monthlyFee: number, year: number) {
+    const existing = await this.paymentModel
+      .find({ student_id: studentId, month_key: { $regex: `^${year}-` } })
+      .lean();
+    const existingKeys = new Set(existing.map((r) => r.month_key));
+    const toCreate = [];
+    for (let m = 1; m <= 12; m++) {
+      const monthKey = `${year}-${String(m).padStart(2, "0")}`;
+      if (!existingKeys.has(monthKey)) {
+        toCreate.push({ student_id: studentId, month_key: monthKey, status: "unpaid", amount: monthlyFee });
+      }
+    }
+    if (toCreate.length) {
+      await this.paymentModel.insertMany(toCreate, { ordered: false }).catch(() => undefined);
+    }
   }
 }

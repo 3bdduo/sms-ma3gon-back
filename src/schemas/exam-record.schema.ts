@@ -27,3 +27,5 @@ export class ExamRecord extends Document {
 
 export const ExamRecordSchema = SchemaFactory.createForClass(ExamRecord);
 ExamRecordSchema.index({ id: 1, edu_group_id: 1, student_id: 1 });
+// unique: يمنع تكرار درجة الطالب في نفس الامتحان
+ExamRecordSchema.index({ edu_group_id: 1, name: 1, student_id: 1 }, { unique: true });

@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { InjectModel, InjectConnection } from "@nestjs/mongoose";
+import { Model, Connection } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 import {
   Group, Teacher, Student, AttendanceRecord, MemorizationLog, PaymentRecord,
@@ -22,6 +22,7 @@ export class GroupsService {
     @InjectModel(ExamRecord.name) private readonly examModel: Model<ExamRecord>,
     @InjectModel(CompetitionParticipant.name) private readonly competitionParticipantModel: Model<CompetitionParticipant>,
     @InjectModel(CompetitionResult.name) private readonly competitionResultModel: Model<CompetitionResult>,
+    @InjectConnection() private readonly connection: Connection,
   ) {}
 
   async findAll() {
@@ -166,20 +167,26 @@ export class GroupsService {
     const students = await this.studentModel.find({ group_id: id }).lean();
     const studentIds = students.map((s) => s.id);
 
-    if (studentIds.length) {
-      await Promise.all([
-        this.attendanceModel.deleteMany({ student_id: { $in: studentIds } }),
-        this.memorizationModel.deleteMany({ student_id: { $in: studentIds } }),
-        this.paymentModel.deleteMany({ student_id: { $in: studentIds } }),
-        this.eduStudentRefModel.deleteMany({ student_id: { $in: studentIds } }),
-        this.eduAttendanceModel.deleteMany({ student_id: { $in: studentIds } }),
-        this.examModel.deleteMany({ student_id: { $in: studentIds } }),
-        this.competitionParticipantModel.deleteMany({ student_id: { $in: studentIds } }),
-        this.competitionResultModel.deleteMany({ student_id: { $in: studentIds } }),
-        this.studentModel.deleteMany({ group_id: id }),
-      ]);
+    // transaction: نضمن إن الحذف الكامل يتم أو ما يتم خالص
+    const session = await this.connection.startSession();
+    try {
+      await session.withTransaction(async () => {
+        if (studentIds.length) {
+          await this.attendanceModel.deleteMany({ student_id: { $in: studentIds } }, { session });
+          await this.memorizationModel.deleteMany({ student_id: { $in: studentIds } }, { session });
+          await this.paymentModel.deleteMany({ student_id: { $in: studentIds } }, { session });
+          await this.eduStudentRefModel.deleteMany({ student_id: { $in: studentIds } }, { session });
+          await this.eduAttendanceModel.deleteMany({ student_id: { $in: studentIds } }, { session });
+          await this.examModel.deleteMany({ student_id: { $in: studentIds } }, { session });
+          await this.competitionParticipantModel.deleteMany({ student_id: { $in: studentIds } }, { session });
+          await this.competitionResultModel.deleteMany({ student_id: { $in: studentIds } }, { session });
+          await this.studentModel.deleteMany({ group_id: id }, { session });
+        }
+        await this.groupModel.deleteOne({ id }, { session });
+      });
+    } finally {
+      await session.endSession();
     }
-    await this.groupModel.deleteOne({ id });
   }
 
   // ─── نقل طالب من حلقة لأخرى ─────────────────────────────────────

@@ -1,6 +1,6 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { InjectModel, InjectConnection } from "@nestjs/mongoose";
+import { Model, Connection } from "mongoose";
 import * as bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -61,7 +61,7 @@ export class StudentsService {
     @InjectModel(ExamRecord.name) private readonly examModel: Model<ExamRecord>,
     @InjectModel(CompetitionParticipant.name) private readonly competitionParticipantModel: Model<CompetitionParticipant>,
     @InjectModel(CompetitionResult.name) private readonly competitionResultModel: Model<CompetitionResult>,
-
+    @InjectConnection() private readonly connection: Connection,
   ) {}
 
   async findAll(user: CurrentUserPayload, groupIdQuery?: string) {
@@ -184,12 +184,14 @@ export class StudentsService {
       throw err;
     }
 
-    // أوتوميشن: بننشئ سجلات دفع الاشتراك الشهري لكل شهور السنة الحالية أوتوماتيك
+    // أوتوميشن: بننشئ سجلات دفع الاشتراك الشهري للسنة الحالية والسنة القادمة
     const currentYear = new Date().getFullYear();
     const paymentDocs = [];
-    for (let m = 1; m <= 12; m++) {
-      const monthKey = `${currentYear}-${String(m).padStart(2, "0")}`;
-      paymentDocs.push({ student_id: id, month_key: monthKey, status: "unpaid", amount: monthlyFee });
+    for (const yr of [currentYear, currentYear + 1]) {
+      for (let m = 1; m <= 12; m++) {
+        const monthKey = `${yr}-${String(m).padStart(2, "0")}`;
+        paymentDocs.push({ student_id: id, month_key: monthKey, status: "unpaid", amount: monthlyFee });
+      }
     }
     await this.paymentModel.insertMany(paymentDocs, { ordered: false }).catch(() => undefined);
 
@@ -282,15 +284,23 @@ export class StudentsService {
   }
 
   async remove(id: string) {
-    await this.studentModel.deleteOne({ id });
-    await this.attendanceModel.deleteMany({ student_id: id });
-    await this.memorizationModel.deleteMany({ student_id: id });
-    await this.paymentModel.deleteMany({ student_id: id });
-    await this.eduStudentRefModel.deleteMany({ student_id: id });
-    await this.eduAttendanceModel.deleteMany({ student_id: id });
-    await this.examModel.deleteMany({ student_id: id });
-    await this.competitionParticipantModel.deleteMany({ student_id: id });
-    await this.competitionResultModel.deleteMany({ student_id: id });
+    // transaction: نضمن إن الحذف الكامل يتم أو ما يتم خالص
+    const session = await this.connection.startSession();
+    try {
+      await session.withTransaction(async () => {
+        await this.studentModel.deleteOne({ id }, { session });
+        await this.attendanceModel.deleteMany({ student_id: id }, { session });
+        await this.memorizationModel.deleteMany({ student_id: id }, { session });
+        await this.paymentModel.deleteMany({ student_id: id }, { session });
+        await this.eduStudentRefModel.deleteMany({ student_id: id }, { session });
+        await this.eduAttendanceModel.deleteMany({ student_id: id }, { session });
+        await this.examModel.deleteMany({ student_id: id }, { session });
+        await this.competitionParticipantModel.deleteMany({ student_id: id }, { session });
+        await this.competitionResultModel.deleteMany({ student_id: id }, { session });
+      });
+    } finally {
+      await session.endSession();
+    }
   }
 
   async updateMonthlyFee(id: string, fee: number) {
